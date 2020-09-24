@@ -1,0 +1,152 @@
+---
+title: "Intro to R"
+subtitle: "Code-through with commentary"
+author: "Connor French"
+date: "9/24/2020"
+output: html_document
+---
+
+You'll be analyzing the [palmerpenguins](https://github.com/allisonhorst/palmerpenguins) dataset!  
+![Artwork by @allison_horst](https://github.com/allisonhorst/palmerpenguins/raw/master/man/figures/logo.png)  
+This is a fun dataset collected and made available by [Dr. Kristen Gorman](https://www.uaf.edu/cfos/people/faculty/detail/kristen-gorman.php) and the [Palmer Station, Antarctica LTER](https://pal.lternet.edu/), a member of the [Long Term Ecological Research Network](https://lternet.edu/). A variety of observations and measurements were made across individuals of 3 species of penguins that you're going to dive into!  
+
+If you're reading this and you didn't attend the Introduction to R and RStudio workshop through the [GC Digital Initiatives](https://gcdi.commons.gc.cuny.edu/events/category/workshop/list/) on September 24th, 2020, then make sure to check out the [slides](https://docs.google.com/presentation/d/17hr7eOd_hyzSKPsl4C7UuacrzJAn7ZURM7jFoSC2xIM/edit?usp=sharing) first.
+
+# Load packages and data
+
+First thing first- let's load the `tidyverse`! This is a [set of packages](https://www.tidyverse.org/) especially designed for working with data in R. There is [a whole philosophy](https://tidyverse.tidyverse.org/articles/manifesto.html) behind this set of packages, but suffice it to say they are here to make your life easier. 
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+You're using the `read_csv()` function to load in the dataset. As an argument, you supply the path to where the data is located on your computer, wrapped in quotations. The quotations tell R that this is a string for it to parse, rather than an object that represents something else. The text that `read_csv()` outputs conveniently tells you what data type each column of your dataset is. You'll learn what a data type is in the next section.
+
+```{r}
+penguins <- read_csv("data/penguins.csv")
+```
+
+
+Using the `glimpse()` function, we can see that this dataset has 344 rows and 8 columns. The 8 columns have names- `species`, `island`, `bill_length_mm`, etc. This tabular representation of data is central to R and is known as a dataframe. In an ideal scenario, like the one we have here, the dataframe is *tidy*- each row is an observation and each column is a variable.  
+
+You may notice the `<chr>`, and `<dbl>` in gray. These are the data types of each column. In this case, you have some *character* variables, and some *double* variables. Character variables consist of character strings and don't have any inherent structure (e.g. the values don't have a special order). Doubles are numeric variables that can contain decimal places (but they don't have to). These classifications are important and functions rely on them to perform the correct operations. Learn more about them [here](https://rstudio.cloud/learn/primers/1.2)!  
+```{r}
+glimpse(penguins)
+```
+
+
+# Data wrangling
+
+Let's explore the data a little bit. The functions from this section come from the `dplyr` package, which is part of the `tidyverse`. How many individuals of each penguin species are you working with? To count the number of individuals of each species, use the `count()` function! This function counts the number of observations of each group for whatever variable you're interested in.  
+
+Remember, the `%>%` pipe operator takes the object from before the pipe and adds it as an argument to the function after the pipe. Its usefulness will be more apparent in a moment.  
+
+There is some sampling imbalance here among species- something that you may need to account for if you're performing a statistical analysis.  
+```{r}
+penguins %>% 
+  count(species)
+```
+
+I think Chinstrap penguins look hilarious, so let's conduct an analysis on them. They also have the lowest sample size- I feel for the underdog.  
+
+![source: https://www.zmescience.com/ecology/environmental-issues/climate-change-declines-penguin-population-antarctica-32131/](https://cdn.zmescience.com/wp-content/uploads/2012/06/3444822-Chinstrap-Penguin-0-300x240.jpg)
+
+First, you need to filter the dataset for Chinstrap penguin observations. To *filter* for specific rows in a dataframe, you need to use the `filter()` function! `filter()` takes a conditional statement, where it returns all of the observations that return TRUE and removes all of the observations that return FALSE. In this case, you want all of the rows in the dataframe where the `species` variable matches the string **Chinstrap**. To do this, you need to use a boolean expression, which we discussed briefly in our short R introduction. In R, the `==` sign says "for every value from the variable on the left side of this sign, return TRUE when it matches the value indicated on the right and FALSE when it doesn't".  In your case, you want to retain all the rows where the species variable contains the value "Chinstrap". Let's call this new dataframe "chinstrap".
+```{r}
+chinstrap <- penguins %>% 
+  filter(species == "Chinstrap")
+
+glimpse(chinstrap)
+```
+
+Great, now you have a new dataframe that only has the Chinstrap penguin observations! I have a hunch that penguins with longer flippers weigh more. Do you think flipper length predicts body mass in Chinstrap penguins? Let's check!  
+
+Although this dataset isn't very big, there are many cases when you only want to retain the variables you're interested in to make analysis more manageable. It can get cumbersome filtering a 1000 column dataframe when you're only interested in 3 of those columns! In this case, you're only interested in the variables `flipper_length_mm`, `body_mass_g`, and `sex` (males and females are often different sizes in birds). To *select* columns to retain, you need the `select()` function! All you need to do is enter which columns you want to retain. Let's call this new dataframe `chinstrap_reduced`.
+
+```{r}
+chinstrap_reduced <- chinstrap %>% 
+  select(flipper_length_mm, body_mass_g, sex)
+
+glimpse(chinstrap_reduced)
+```
+
+# Data visualization
+
+Humans are visual animals. Numbers don't mean much to us in the absence of a plot. Before running a statistical analysis, you should ALWAYS visualize your data. Luckily the `ggplot2` package (this gets loaded when you load the `tidyverse` package) contains the tools necessary for both quick exploratory plots and publication-worthy visualizations.  
+
+You're going to make a scatterplot of flipper length vs. body mass. The code below may look a little foreign to what you've seen so far (although all of the code you've seen probably looks foreign). Trust me, though. This style of code for plotting makes things much more intuitive once you get a little used to it.  
+
+`ggplot2` follows a philosophy called the "grammar of graphics". I won't get too in-depth ([see here](https://vita.had.co.nz/papers/layered-grammar.html) for a full explanation), but will just say that it operates by creating a plot layer-by-layer. The `ggplot()` function "sets up" the plot. Here, you're specifying the data your using, `data = chinstrap` and what you want on your axes `aes(x = flipper_length_mm, y = body_mass_g)`. Any function added below the `ggplot()` call will use these specifications unless you provide arguments otherwise. We'll build this plot layer by layer!  
+
+First, the `ggplot()` function establishes the base of the plot. There are no points on the plot because we haven't told it what style we want!
+```{r}
+ggplot(data = chinstrap, aes(x = flipper_length_mm, y = body_mass_g)) 
+```
+
+The `+` after `ggplot()` can be thought of as analogous to the `%>%` pipe. It is linking the functions together to make a complete plot. All functions beginning with `geom_` add a new layer to the plot. The `geom_point()` function makes this a scatterplot! You don't need to add any arguments because it is inheriting them from the `ggplot()` call.  
+
+It looks like body mass increases with flipper length! But what is the influence of sex? I have a feeling the relationship is different in males versus females.
+```{r}
+ggplot(data = chinstrap, aes(x = flipper_length_mm, y = body_mass_g)) +
+  geom_point()
+```
+
+
+To visualize the impact of sex on this relationship, you're going to color the points according to the penguin's sex. It's easy! The `color = sex` argument tells ggplot to map colors to the unique values of sex (in this case "male" and "female").  
+
+Now you can see that males tend to have both larger body mass and longer flippers. But what about the trends? Is the relationship between body mass and flipper length the same between males and females?
+```{r}
+ggplot(data = chinstrap, aes(x = flipper_length_mm, 
+                             y = body_mass_g,
+                             color = sex)) +
+  geom_point()
+```
+
+To visualize a trendline, you need to add a new layer. The `geom_smooth()` function adds trendlines to plots, and can add different types of lines depending on the method you give it! In this case, you're using the "lm" method to create a linear model trendline. `se = FALSE` is there to prevent the plot from shading standard error intervals around the line. You're just interested in exploring general relationships, so the standard error shading would just add unnecessary clutter to the plot.  
+
+From adding the trendlines, it looks like the relationship between body mass and flipper length is actually stronger in males than females! You uncovered all of these relationships without running a single statistical model. You also now know that a simple linear regression between body mass and flipper length would be inappropriate since sex impacts that relationship.  
+
+This isn't the most beautiful plot, but there is an amazing amount of flexibility to turn this into a publication-worthy plot. If you are unsure about what visualization method to use or are looking for something to inspire you, I highly recommend [from Data to Viz](https://www.data-to-viz.com/).
+```{r}
+ggplot(data = chinstrap, aes(x = flipper_length_mm, 
+                             y = body_mass_g,
+                             color = sex)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+Now for (what I think is) the coolest part of the demo. You created some intermediate variables and did the analysis piece-by-piece. But the power of the `%>%` operator gives you the flexibility to link everything together! This is very convenient for keeping your data manipulation logic evident and consistent. You also don't need to keep track of a bunch of different intermediate objects. To put into words the code below: "Take the penguins dataframe AND THEN filter for Chinstrap penguins, AND THEN select the 3 important columns, AND THEN plot flipper length vs body mass, colored by sex WITH a scatterplot WITH a trendline" (a little grammatically weird, but you get the point hopefully). 
+
+```{r}
+penguins %>% 
+  filter(species == "Chinstrap") %>% 
+  select(flipper_length_mm, body_mass_g, sex) %>% 
+  ggplot(aes(x = flipper_length_mm, 
+                             y = body_mass_g,
+                             color = sex)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+Here is something I would consider publication quality, using only a little bit more code:
+```{r}
+ggplot(data = chinstrap_reduced, aes(x = flipper_length_mm,
+                                     y = body_mass_g, 
+                                     fill = sex), color = "black") +
+  geom_point(shape = 21, size = 4) +
+  labs(x = "Flipper length (mm)",
+       y = "Body mass (g)",
+       color = "Sex",
+       title = "Does flipper length predict body mass in Chinstrap penguins?") +
+  scale_fill_manual(values = c("#ECCBAE", "#046C9A"), guide = FALSE) +
+  geom_smooth(aes(color = sex), method = "lm", se = FALSE) +
+  scale_color_manual(values = c("#ECCBAE", "#046C9A"),
+                     labels = c("Female", "Male")) +
+  theme_bw() +
+  theme(axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        title = element_text(size = 14),
+        legend.text = element_text(size = 10))
+```  
+
+
+Now let's get back to the [slides](https://docs.google.com/presentation/d/17hr7eOd_hyzSKPsl4C7UuacrzJAn7ZURM7jFoSC2xIM/edit?usp=sharing).
