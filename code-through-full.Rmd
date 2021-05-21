@@ -2,7 +2,6 @@
 title: "Intro to R"
 subtitle: "Code-through with commentary"
 author: "Connor French"
-date: "9/24/2020"
 output: html_document
 ---
 
@@ -10,7 +9,7 @@ You'll be analyzing the [palmerpenguins](https://github.com/allisonhorst/palmerp
 ![Artwork by @allison_horst](https://github.com/allisonhorst/palmerpenguins/raw/master/man/figures/logo.png)  
 This is a fun dataset collected and made available by [Dr. Kristen Gorman](https://www.uaf.edu/cfos/people/faculty/detail/kristen-gorman.php) and the [Palmer Station, Antarctica LTER](https://pal.lternet.edu/), a member of the [Long Term Ecological Research Network](https://lternet.edu/). A variety of observations and measurements were made across individuals of 3 species of penguins that you're going to dive into!  
 
-If you're reading this and you didn't attend the Introduction to R and RStudio workshop through the [GC Digital Initiatives](https://gcdi.commons.gc.cuny.edu/events/category/workshop/list/) on September 24th, 2020, then make sure to check out the [slides](https://docs.google.com/presentation/d/17hr7eOd_hyzSKPsl4C7UuacrzJAn7ZURM7jFoSC2xIM/edit?usp=sharing) first.
+If you're reading this and you didn't attend the Introduction to R and RStudio workshop through the [GC Digital Initiatives](https://gcdi.commons.gc.cuny.edu/events/category/workshop/list/) on September 24th, 2020, then make sure to check out the [slides](intro_to_r.pdf) first.
 
 # Load packages and data
 
